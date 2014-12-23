@@ -169,6 +169,7 @@ const TRANSPORT = ["Rewind", "FastForward", "Stop", "Play/Pause", "Record", "Loo
 const KNOBS = ["Knob 1", "Knob 2", "Knob 3", "Knob 4", "Knob 5", "Knob 6", "Knob 7", "Knob 8"];
 const KNOBMODE = ["None", "One", "Two"];
 const FADERS = ["Fader 1", "Fader 2", "Fader 3", "Fader 4", "Fader 5", "Fader 6", "Fader 7", "Fader 8"];
+const FADERBANK = ["None", "Two"];
 
 // Definition of the controller:
 host.defineController("Generic", "Controller", "1.0", "8df76600-0042-11e4-9191-0800200c9a66", "Thomas Helzle");
@@ -321,69 +322,6 @@ function init() {
       }
    });
 
-   // Knob Modes:
-   gen.knobModeButtonsPre = gen.prefs.getEnumSetting("Knob Mode Selection Button(s)", "Knob Mode Buttons", KNOBMODE, "None");
-   gen.knobModeButton1CCPre = gen.prefs.getNumberSetting("Button 1 CC", "Knob Mode Buttons", 0, 127, 1, "", 0);
-   gen.knobModeButton2CCPre = gen.prefs.getNumberSetting("Button 2 CC", "Knob Mode Buttons", 0, 127, 1, "", 0);
-   gen.learnKnobModeButtonsPre = gen.prefs.getEnumSetting("Learn Knob Mode Buttons: ", "Knob Mode Buttons", LEARN, "Off");
-
-   gen.knobModeNextDoc = gen.docs.getSignalSetting("Mode", "Knob Mode", "Next");
-   gen.knobModePreviousDoc = gen.docs.getSignalSetting("Mode", "Knob Mode", "Previous");
-
-   gen.knobModeButtonsPre.addValueObserver(function (value) {
-      switch (value) {
-         case KNOBMODE[0]:
-            gen.knobModeButton1CCPre.hide();
-            gen.knobModeButton2CCPre.hide();
-            gen.learnKnobModeButtonsPre.hide();
-            gen.knobModeButtonsNum = 0;
-            break;
-         case KNOBMODE[1]:
-            gen.knobModeButton1CCPre.show();
-            gen.knobModeButton2CCPre.hide();
-            gen.learnKnobModeButtonsPre.show();
-            gen.knobModeButtonsNum = 1;
-            break;
-         case KNOBMODE[2]:
-            gen.knobModeButton1CCPre.show();
-            gen.knobModeButton2CCPre.show();
-            gen.learnKnobModeButtonsPre.show();
-            gen.knobModeButtonsNum = 2;
-            break;
-      }
-   });
-   gen.knobModeButton1CCPre.addValueObserver(128, function (value) {
-      gen.knobModeButton1CC = value;
-   });
-   gen.knobModeButton2CCPre.addValueObserver(128, function (value) {
-      gen.knobModeButton2CC = value;
-   });
-   gen.learnKnobModeButtonsPre.addValueObserver(function (value) {
-      gen.learnKnobModeButtons = (value === "Learn");
-      if (gen.learnKnobModeButtons) {
-         host.showPopupNotification("Please press Button 1.");
-         gen.knobModeButton = 0;
-      }
-   });
-
-   gen.knobModePreviousDoc.addSignalObserver(function(value){
-      if (gen.knobMode > 0) {
-         gen.knobMode -= 1;
-      }
-      else {
-         gen.knobMode = gen.knobLoopLength;
-      }
-      setKnobMode();
-   });
-   gen.knobModeNextDoc.addSignalObserver(function(value){
-         if (gen.knobMode < gen.knobLoopLength) {
-            gen.knobMode += 1;
-         }
-         else {
-            gen.knobMode = 0;
-         }
-         setKnobMode();
-   });
 
    // Midi Learn Faders:
    gen.fadersEnabledPre = gen.prefs.getEnumSetting("Controller has Faders: ", "Faders", YESNO, "No");
@@ -424,6 +362,53 @@ function init() {
          gen.faderSelectionPre.set("Fader 1");
          host.showPopupNotification("Please move Fader 1");
       }
+   });
+
+   // Trackbank Buttons:
+   gen.faderBankButtonsPre = gen.prefs.getEnumSetting("Fader Bank Navigation Buttons", "Fader Bank Buttons", FADERBANK, "None");
+   gen.faderBankButton1CCPre = gen.prefs.getNumberSetting("Button 1 CC", "Fader Bank Buttons", 0, 127, 1, "", 0);
+   gen.faderBankButton2CCPre = gen.prefs.getNumberSetting("Button 2 CC", "Fader Bank Buttons", 0, 127, 1, "", 0);
+   gen.learnFaderBankButtonsPre = gen.prefs.getEnumSetting("Learn Fader Bank Buttons: ", "Fader Bank Buttons", LEARN, "Off");
+
+   gen.faderBankPreviousDoc = gen.docs.getSignalSetting("Previous", "Fader Bank", "Previous");
+   gen.faderBankNextDoc = gen.docs.getSignalSetting("Next", "Fader Bank", "Next");
+
+   gen.faderBankButtonsPre.addValueObserver(function (value) {
+      switch (value) {
+         case FADERBANK[0]:
+            gen.faderBankButton1CCPre.hide();
+            gen.faderBankButton2CCPre.hide();
+            gen.learnFaderBankButtonsPre.hide();
+            gen.faderBankButtonsNum = 0;
+            break;
+         case FADERBANK[1]:
+         case FADERBANK[1]:
+            gen.faderBankButton1CCPre.show();
+            gen.faderBankButton2CCPre.show();
+            gen.learnFaderBankButtonsPre.show();
+            gen.faderBankButtonsNum = 2;
+            break;
+      }
+   });
+   gen.faderBankButton1CCPre.addValueObserver(128, function (value) {
+      gen.faderBankButton1CC = value;
+   });
+   gen.faderBankButton2CCPre.addValueObserver(128, function (value) {
+      gen.faderBankButton2CC = value;
+   });
+   gen.learnFaderBankButtonsPre.addValueObserver(function (value) {
+      gen.learnFaderBankButtons = (value === "Learn");
+      if (gen.learnFaderBankButtons) {
+         host.showPopupNotification("Please press Button 1.");
+         gen.faderBankButton = 0;
+      }
+   });
+
+   gen.faderBankPreviousDoc.addSignalObserver(function(value){
+      gen.trackBank.scrollChannelsUp();
+   });
+   gen.faderBankNextDoc.addSignalObserver(function(value){
+      gen.trackBank.scrollChannelsDown();
    });
 
    // Create Note Inputs and set options:
@@ -549,6 +534,21 @@ function onMidi(status, data1, data2) {
                   break;
             }
          }
+         // Midi Learn the Button(s) to navigate the Fader Bank:
+         else if (gen.learnFaderBankButtons) {
+            if (gen.faderBankButton === 0) {
+               gen.faderBankButton1CCPre.set(midi.data1, 128);
+               gen.faderBankButton = 1;
+               host.showPopupNotification("Please press Button 2.");
+            }
+            else if (gen.faderBankButton === 1) {
+               if (gen.faderBankButton1CC != midi.data1) {
+                  gen.faderBankButton2CCPre.set(midi.data1, 128);
+                  gen.learnFaderBankButtonsPre.set("Off");
+                  host.showPopupNotification("Midi Learn finished.");
+               }
+            }
+         }
          // Midi Learn the Button(s) to select the Mode for the Knobs:
          else if (gen.learnKnobModeButtons) {
             if (gen.knobModeButton === 0) {
@@ -630,6 +630,17 @@ function onMidi(status, data1, data2) {
                         gen.knobMode = gen.knobLoopLength;
                      }
                      setKnobMode();
+                  }
+                  break;
+               // Track Bank Navigation:
+               case gen.faderBankButton1CC:
+                  if(midi.isOn()) {
+                     gen.trackBank.scrollChannelsUp();
+                  }
+                  break;
+               case gen.faderBankButton2CC:
+                  if(midi.isOn()) {
+                     gen.trackBank.scrollChannelsDown();
                   }
                   break;
 
@@ -752,19 +763,23 @@ function setKnobMode() {
    switch (gen.knobMode) {
       case 0:
          host.showPopupNotification("Macro Mode");
+         gen.knobModeDisplay.set("Macro Mode");
          macro = true;
          break;
       case 1:
          host.showPopupNotification("Common Parameters");
+         gen.knobModeDisplay.set("Common Parameters");
          common = true;
          break;
       case 2:
          host.showPopupNotification("Envelope Parameters");
+         gen.knobModeDisplay.set("Envelope Parameters");
          envelope = true;
          break;
       default:
          gen.cursorDevice.setParameterPage(gen.knobMode - 3);
          host.showPopupNotification("Mapping: " + gen.pageNames[gen.knobMode - 3]);
+         gen.knobModeDisplay.set("Mapping: " + gen.pageNames[gen.knobMode - 3]);
          user = true;
          break;
    }
