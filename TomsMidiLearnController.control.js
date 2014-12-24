@@ -322,6 +322,69 @@ function init() {
       }
    });
 
+   // Knob Modes:
+   gen.knobModeButtonsPre = gen.prefs.getEnumSetting("Knob Mode Selection Button(s)", "Knob Mode Buttons", KNOBMODE, "None");
+   gen.knobModeButton1CCPre = gen.prefs.getNumberSetting("Button 1 CC", "Knob Mode Buttons", 0, 127, 1, "", 0);
+   gen.knobModeButton2CCPre = gen.prefs.getNumberSetting("Button 2 CC", "Knob Mode Buttons", 0, 127, 1, "", 0);
+   gen.learnKnobModeButtonsPre = gen.prefs.getEnumSetting("Learn Knob Mode Buttons: ", "Knob Mode Buttons", LEARN, "Off");
+
+   gen.knobModeNextDoc = gen.docs.getSignalSetting("Mode", "Knob Mode", "Next");
+   gen.knobModePreviousDoc = gen.docs.getSignalSetting("Mode", "Knob Mode", "Previous");
+
+   gen.knobModeButtonsPre.addValueObserver(function (value) {
+      switch (value) {
+         case KNOBMODE[0]:
+            gen.knobModeButton1CCPre.hide();
+            gen.knobModeButton2CCPre.hide();
+            gen.learnKnobModeButtonsPre.hide();
+            gen.knobModeButtonsNum = 0;
+            break;
+         case KNOBMODE[1]:
+            gen.knobModeButton1CCPre.show();
+            gen.knobModeButton2CCPre.hide();
+            gen.learnKnobModeButtonsPre.show();
+            gen.knobModeButtonsNum = 1;
+            break;
+         case KNOBMODE[2]:
+            gen.knobModeButton1CCPre.show();
+            gen.knobModeButton2CCPre.show();
+            gen.learnKnobModeButtonsPre.show();
+            gen.knobModeButtonsNum = 2;
+            break;
+      }
+   });
+   gen.knobModeButton1CCPre.addValueObserver(128, function (value) {
+      gen.knobModeButton1CC = value;
+   });
+   gen.knobModeButton2CCPre.addValueObserver(128, function (value) {
+      gen.knobModeButton2CC = value;
+   });
+   gen.learnKnobModeButtonsPre.addValueObserver(function (value) {
+      gen.learnKnobModeButtons = (value === "Learn");
+      if (gen.learnKnobModeButtons) {
+         host.showPopupNotification("Please press Button 1.");
+         gen.knobModeButton = 0;
+      }
+   });
+
+   gen.knobModePreviousDoc.addSignalObserver(function(value){
+      if (gen.knobMode > 0) {
+         gen.knobMode -= 1;
+      }
+      else {
+         gen.knobMode = gen.knobLoopLength;
+      }
+      setKnobMode();
+   });
+   gen.knobModeNextDoc.addSignalObserver(function(value){
+      if (gen.knobMode < gen.knobLoopLength) {
+         gen.knobMode += 1;
+      }
+      else {
+         gen.knobMode = 0;
+      }
+      setKnobMode();
+   });
 
    // Midi Learn Faders:
    gen.fadersEnabledPre = gen.prefs.getEnumSetting("Controller has Faders: ", "Faders", YESNO, "No");
