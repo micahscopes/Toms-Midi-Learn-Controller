@@ -328,8 +328,8 @@ function init() {
    gen.knobModeButton2CCPre = gen.prefs.getNumberSetting("Button 2 CC", "Knob Mode Buttons", 0, 127, 1, "", 0);
    gen.learnKnobModeButtonsPre = gen.prefs.getEnumSetting("Learn Knob Mode Buttons: ", "Knob Mode Buttons", LEARN, "Off");
 
-   gen.knobModeNextDoc = gen.docs.getSignalSetting("Mode", "Knob Mode", "Next");
-   gen.knobModePreviousDoc = gen.docs.getSignalSetting("Mode", "Knob Mode", "Previous");
+   gen.knobModeNextDoc = gen.docs.getSignalSetting("Next", "Knob Mode", "Next");
+   gen.knobModePreviousDoc = gen.docs.getSignalSetting("Previous", "Knob Mode", "Previous");
 
    gen.knobModeButtonsPre.addValueObserver(function (value) {
       switch (value) {
