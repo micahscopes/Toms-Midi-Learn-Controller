@@ -21,8 +21,11 @@ Known Issues:
 
 
 Installation:
-Move the two scripts "TomsMidiLearnController.control.js" and "TomsMidi.js" in a folder of your choice (z.B. "TomsGeneric") in "Documents\Bitwig Studio\Controller Scripts\"
-The path is pretty much the same on all OS', the documents folder in your user directory.
+Move the two scripts "TomsMidiLearnController.control.js" and "TomsMidi.js" into a folder of your choice (z.B. "TomsGeneric") in the Bitwig Studio User Folder:
+On Windows the path is "YourUserFolder\Documents\Bitwig Studio\Controller Scripts\"
+On OSX it's also in "YourUserFolder\Documents\Bitwig Studio\Controller Scripts\"
+On Linux you find it in "YourUserFolder\Bitwig Studio\Controller Scripts\"
+
 
 Start Bitwig Studio and got to Preferences -> Controllers -> Add controller manually -> Generic -> "Controller"
 This should create a new controller entry in the list called "Generic Controller".
