@@ -488,7 +488,6 @@ function init() {
    // Create Pad Input:
    gen.padsMidi = host.getMidiInPort(0).createNoteInput(":  Pads", this.midiChPadsFilter);
    gen.padsMidi.setShouldConsumeEvents(false);
-   gen.padsMidi.assignPolyphonicAftertouchToExpression(gen.midiChPads, NoteExpression.TIMBRE_UP, 2);
 }
 
 // Main Midi Callback:
