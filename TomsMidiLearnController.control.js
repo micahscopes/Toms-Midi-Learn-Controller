@@ -240,7 +240,7 @@ function init() {
       gen.midiMonEnable = (value === "On");
       gen.midiMonEnable ? gen.midiMonChannelPre.show() : gen.midiMonChannelPre.hide();
       gen.midiMonEnable ? gen.midiMonTypePre.show() : gen.midiMonTypePre.hide();
-      gen.midiMonEnable ? gen.midiMonDataPre.show() : gen.midiMonDataPre.hide();
+      gen.midiMonEnable ? gen.midiMonDataPre) : gen.midiMonDataPre.hide();
       if (!gen.midiMonEnable) {
          gen.midiMonChannelPre.set("");
          gen.midiMonTypePre.set("");
