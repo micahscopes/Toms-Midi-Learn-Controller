@@ -221,7 +221,7 @@ function init() {
       gen.midiMonEnable = (value === "On");
       gen.midiMonEnable ? gen.midiMonChannelPre.show() : gen.midiMonChannelPre.hide();
       gen.midiMonEnable ? gen.midiMonTypePre.show() : gen.midiMonTypePre.hide();
-      gen.midiMonEnable ? gen.midiMonDataPre.show() : gen.midiMonDataPre.hide();
+      gen.midiMonEnable ? gen.midiMonDataPre) : gen.midiMonDataPre.hide();
       if (!gen.midiMonEnable) {
          gen.midiMonChannelPre.set("");
          gen.midiMonTypePre.set("");
@@ -933,6 +933,7 @@ function setKnobPrefsVisible() {
          }
       }
       gen.knobsEnabled ? gen.knobSelectionPre.show() : gen.knobSelectionPre.hide();
+      gen.knobsEnabled ? gen.knobsRelativePre.show() : gen.knobsRelativePre.hide();
       gen.knobsEnabled ? gen.learnKnobsSinglePre.show() : gen.learnKnobsSinglePre.hide();
       gen.knobsEnabled ? gen.learnKnobsAllPre.show() : gen.learnKnobsAllPre.hide();
    }
