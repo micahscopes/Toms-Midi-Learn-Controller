@@ -83,6 +83,7 @@ function Generic() {
 
    // Cursor Device:
    this.knobMode = 0;
+   this.knobRelative = false;
    this.selectedPage = 0;
    this.previousParameterPageEnabled = false;
    this.nextParameterPageEnabled = false;
@@ -116,6 +117,7 @@ function Generic() {
    // Knobs:
    this.knobsEnabledPre = null;
    this.knobsEnabled = false;
+   this.knobsRelativePre = null;
    this.knobSelectionPre = null;
    this.knobSelection = "Knob 1";
    this.knobSelectionNum = 0;
@@ -168,6 +170,7 @@ const LEARN = ["Learn", "Off"];
 const TRANSPORT = ["Rewind", "FastForward", "Stop", "Play/Pause", "Record", "Loop"];
 const KNOBS = ["Knob 1", "Knob 2", "Knob 3", "Knob 4", "Knob 5", "Knob 6", "Knob 7", "Knob 8"];
 const KNOBMODE = ["None", "One", "Two"];
+const KNOBSRELATIVE = ["Absolute", "Relative (2's complement)"];
 const FADERS = ["Fader 1", "Fader 2", "Fader 3", "Fader 4", "Fader 5", "Fader 6", "Fader 7", "Fader 8"];
 const FADERBANK = ["None", "Two"];
 
@@ -289,6 +292,11 @@ function init() {
    // Midi Learn Knobs:
    gen.knobsEnabledPre = gen.prefs.getEnumSetting("Controller Has Knobs", "Knobs", YESNO, "No");
    gen.knobSelectionPre = gen.prefs.getEnumSetting("Select the Knob to learn: ", "Knobs", KNOBS, "Knob 1");
+   gen.knobsRelativePre = gen.prefs.getEnumSetting("Knobs are relative", "Knobs", KNOBSRELATIVE, "Absolute");
+   gen.knobsRelativePre.addValueObserver(function (value) {
+      gen.knobsRelative = !(value === "Absolute");
+   });
+
    for (var i = 0; i < 8; i++) {
       gen.knobCCsPre[i] = gen.prefs.getNumberSetting("Knob " + (i + 1) + " CC: ", "Knobs", 0, 127, 1, "", 0);
    }
@@ -857,19 +865,36 @@ function setKnobMode() {
 
 // Helper Function to set the Knob Value depending on the current Mode:
 function setKnobValue(index, midi) {
+  var val;
+  var inc = function(i){
+    var v
+    if(i<64) {
+      v = i;
+    } else {
+      v = -(128 - i);
+    }
+    return v;
+  }
+
    switch (gen.knobMode) {
       case 0:
-         gen.cursorDevice.getMacro(index).getAmount().set(midi.data2, 128);
+         val = gen.cursorDevice.getMacro(index).getAmount();
          break;
       case 1:
-         gen.cursorDevice.getCommonParameter(index).set(midi.data2, 128);
+         val = gen.cursorDevice.getCommonParameter(index);
          break;
       case 2:
-         gen.cursorDevice.getEnvelopeParameter(index).set(midi.data2, 128);
+         val = gen.cursorDevice.getEnvelopeParameter(index);
          break;
       default:
-         gen.cursorDevice.getParameter(index).set(midi.data2, 128);
+         val = gen.cursorDevice.getParameter(index);
          break;
+   }
+
+   if (gen.knobsRelative) {
+     val.inc(inc(midi.data2), 128);
+   } else {
+     val.set(inc(midi.data2), 128);
    }
 }
 
