@@ -62,9 +62,9 @@ function Generic() {
    this.trackBank = host.createTrackBank(8, 8, 0);
 
    // User Mappings:
-   this.lowCC = 1;
+   this.lowCC = 0;
    this.highCC = 119;
-   this.userControls = host.createUserControls(this.highCC - this.lowCC + 1);
+   this.userControls = host.createUserControls(this.highCC - this.lowCC);
 
    // Midi Monitor:
    this.midiMonEnablePre = null;
@@ -240,7 +240,7 @@ function init() {
       gen.midiMonEnable = (value === "On");
       gen.midiMonEnable ? gen.midiMonChannelPre.show() : gen.midiMonChannelPre.hide();
       gen.midiMonEnable ? gen.midiMonTypePre.show() : gen.midiMonTypePre.hide();
-      gen.midiMonEnable ? gen.midiMonDataPre.show() : gen.midiMonDataPre.hide(); 
+      gen.midiMonEnable ? gen.midiMonDataPre.show() : gen.midiMonDataPre.hide();
  if (!gen.midiMonEnable) {
          gen.midiMonChannelPre.set("");
          gen.midiMonTypePre.set("");
