@@ -905,6 +905,14 @@ function onMidi(status, data1, data2) {
          }
          break;
    }
+
+   if (isChannelController(status) || isPitchBend(status)) {
+      if (data1 >= gen.lowCC && data1 <= gen.highCC) {
+         var index = data1 - gen.lowCC + (gen.highCC * MIDIChannel(status));
+         userControls.getControl(index).set(data2, 128);
+      }
+   }
+
 }
 
 // The Main Sysex Callback:
