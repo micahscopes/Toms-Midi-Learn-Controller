@@ -219,6 +219,7 @@ function init() {
    gen.cursorDevice.addSelectedPageObserver(0, function (value) {
       gen.selectedPage = value;
    });
+
    gen.cursorDevice.addPreviousParameterPageEnabledObserver(function (value) {
       gen.previousParameterPageEnabled = value;
    });
@@ -513,7 +514,7 @@ function init() {
             gen.learnFaderBankButtonsPre.hide();
             gen.faderBankButtonsNum = 0;
             break;
-         case FADERBANK[1]:
+        //  case FADERBANK[1]:
          case FADERBANK[1]:
             gen.faderBankButton1CCPre.show();
             gen.faderBankButton2CCPre.show();
@@ -537,10 +538,10 @@ function init() {
    });
 
    gen.faderBankPreviousDoc.addSignalObserver(function(value){
-      gen.trackBank.scrollChannelsUp();
+      gen.trackBank.scrollChannelsPageUp();
    });
    gen.faderBankNextDoc.addSignalObserver(function(value){
-      gen.trackBank.scrollChannelsDown();
+      gen.trackBank.scrollChannelsPageDown();
    });
 
    // Create Note Inputs and set options:
@@ -557,6 +558,22 @@ function init() {
    // Create Pad Input:
    gen.padsMidi = host.getMidiInPort(0).createNoteInput(":  Pads", this.midiChPadsFilter);
    gen.padsMidi.setShouldConsumeEvents(false);
+
+   var setKnobMIDIValue = function(i) {
+     return function(value) {
+      //  println(gen.knobCCs[i]);
+      if(i == 0){println("knob mode:"+String(gen.knobMode))};
+      println(value)
+       host.getMidiOutPort(0).sendMidi(0xB0,knobCCs[i],value);
+     };
+   };
+   for (var i = 0; i< 8; i++) {
+    //  gen.cursorDevice.getCommonParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+    //  gen.cursorDevice.getEnvelopeParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+     gen.cursorDevice.getParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+     gen.cursorDevice.getMacro(i).getAmount().addValueObserver(128,setKnobMIDIValue(i));
+   }
+
 }
 
 // Main Midi Callback:
@@ -794,10 +811,10 @@ function onMidi(status, data1, data2) {
                   break;
                // Track Bank Navigation:
                case gen.faderBankButton1CC:
-                     gen.trackBank.scrollChannelsUp();
+                     gen.trackBank.scrollChannelsPageUp();
                   break;
                case gen.faderBankButton2CC:
-                     gen.trackBank.scrollChannelsDown();
+                     gen.trackBank.scrollChannelsPageDown();
                   break;
 
                // Set Knobs:
@@ -945,31 +962,55 @@ function onSysex(data) {
 
 // Helper Function to set the Knob Mode in one go:
 function setKnobMode() {
+  println("set knob modebegin");
+
    var macro = false;
    var common = false;
    var envelope = false;
    var user = false;
-
+  //  var setKnobMIDIValue = function(i) {
+  //    return function(value) {
+  //     //  println(gen.knobCCs[i]);
+  //      host.getMidiOutPort(0).sendMidi(0xB0,i,value);
+  //    };
+  //  };
    switch (gen.knobMode) {
       case 0:
+      // gen.cursorDevice.setParameterPage(-1);
+
+        // for (var i = 0; i< 8; i++) {
+        //   gen.cursorDevice.getMacro(i).getAmount().addValueObserver(128,setKnobMIDIValue(i));
+        // }
+        // gen.cursorDevice.setParameterPage(0);
          host.showPopupNotification("Macro Mode");
-         gen.knobModeDisplay.set("Macro Mode");
+        //  gen.knobModeDisplay.set("Macro Mode");
          macro = true;
          break;
       case 1:
+        // for (var i = 0; i< 8; i++) {
+        //   gen.cursorDevice.getCommonParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+        // }
+        // gen.cursorDevice.setParameterPage(1);
          host.showPopupNotification("Common Parameters");
-         gen.knobModeDisplay.set("Common Parameters");
+        //  gen.knobModeDisplay.set("Common Parameters");
          common = true;
          break;
       case 2:
+        // for (var i = 0; i< 8; i++) {
+        //   gen.cursorDevice.getEnvelopeParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+        // }
+        // gen.cursorDevice.setParameterPage(2);
          host.showPopupNotification("Envelope Parameters");
-         gen.knobModeDisplay.set("Envelope Parameters");
+        //  gen.knobModeDisplay.set("Envelope Parameters");
          envelope = true;
          break;
       default:
+        // for (var i = 0; i< 8; i++) {
+        //   // gen.cursorDevice.getParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+        // }
          gen.cursorDevice.setParameterPage(gen.knobMode - 3);
          host.showPopupNotification("Mapping: " + gen.pageNames[gen.knobMode - 3]);
-         gen.knobModeDisplay.set("Mapping: " + gen.pageNames[gen.knobMode - 3]);
+        //  gen.knobModeDisplay.set("Mapping: " + gen.pageNames[gen.knobMode - 3]);
          user = true;
          break;
    }
@@ -979,8 +1020,6 @@ function setKnobMode() {
       gen.cursorDevice.getCommonParameter(i).setIndication(common);
       gen.cursorDevice.getParameter(i).setIndication(user);
    }
-   // Envelope Parameters is the only set with 9 Parameters...
-   gen.cursorDevice.getEnvelopeParameter(8).setIndication(envelope);
 }
 
 // Helper Function to set the Knob Value depending on the current Mode:
