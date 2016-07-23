@@ -568,8 +568,8 @@ function init() {
      };
    };
    for (var i = 0; i< 8; i++) {
-    //  gen.cursorDevice.getCommonParameter(i).addValueObserver(128,setKnobMIDIValue(i));
-    //  gen.cursorDevice.getEnvelopeParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+     gen.cursorDevice.getCommonParameter(i).addValueObserver(128,setKnobMIDIValue(i));
+     gen.cursorDevice.getEnvelopeParameter(i).addValueObserver(128,setKnobMIDIValue(i));
      gen.cursorDevice.getParameter(i).addValueObserver(128,setKnobMIDIValue(i));
      gen.cursorDevice.getMacro(i).getAmount().addValueObserver(128,setKnobMIDIValue(i));
    }
@@ -968,49 +968,23 @@ function setKnobMode() {
    var common = false;
    var envelope = false;
    var user = false;
-  //  var setKnobMIDIValue = function(i) {
-  //    return function(value) {
-  //     //  println(gen.knobCCs[i]);
-  //      host.getMidiOutPort(0).sendMidi(0xB0,i,value);
-  //    };
-  //  };
+
    switch (gen.knobMode) {
       case 0:
-      // gen.cursorDevice.setParameterPage(-1);
-
-        // for (var i = 0; i< 8; i++) {
-        //   gen.cursorDevice.getMacro(i).getAmount().addValueObserver(128,setKnobMIDIValue(i));
-        // }
-        // gen.cursorDevice.setParameterPage(0);
          host.showPopupNotification("Macro Mode");
-        //  gen.knobModeDisplay.set("Macro Mode");
          macro = true;
          break;
       case 1:
-        // for (var i = 0; i< 8; i++) {
-        //   gen.cursorDevice.getCommonParameter(i).addValueObserver(128,setKnobMIDIValue(i));
-        // }
-        // gen.cursorDevice.setParameterPage(1);
          host.showPopupNotification("Common Parameters");
-        //  gen.knobModeDisplay.set("Common Parameters");
          common = true;
          break;
       case 2:
-        // for (var i = 0; i< 8; i++) {
-        //   gen.cursorDevice.getEnvelopeParameter(i).addValueObserver(128,setKnobMIDIValue(i));
-        // }
-        // gen.cursorDevice.setParameterPage(2);
          host.showPopupNotification("Envelope Parameters");
-        //  gen.knobModeDisplay.set("Envelope Parameters");
          envelope = true;
          break;
       default:
-        // for (var i = 0; i< 8; i++) {
-        //   // gen.cursorDevice.getParameter(i).addValueObserver(128,setKnobMIDIValue(i));
-        // }
          gen.cursorDevice.setParameterPage(gen.knobMode - 3);
          host.showPopupNotification("Mapping: " + gen.pageNames[gen.knobMode - 3]);
-        //  gen.knobModeDisplay.set("Mapping: " + gen.pageNames[gen.knobMode - 3]);
          user = true;
          break;
    }
