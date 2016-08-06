@@ -62,9 +62,9 @@ function Generic() {
    this.trackBank = host.createTrackBank(8, 8, 0);
 
    // User Mappings:
-   this.lowCC = 1;
+   this.lowCC = 0;
    this.highCC = 119;
-   this.userControls = host.createUserControls(this.highCC - this.lowCC + 1);
+   this.userControls = host.createUserControls(this.highCC - this.lowCC);
 
    // Midi Monitor:
    this.midiMonEnablePre = null;
@@ -83,6 +83,7 @@ function Generic() {
 
    // Cursor Device:
    this.knobMode = 0;
+   this.knobRelative = false;
    this.selectedPage = 0;
    this.previousParameterPageEnabled = false;
    this.nextParameterPageEnabled = false;
@@ -116,6 +117,7 @@ function Generic() {
    // Knobs:
    this.knobsEnabledPre = null;
    this.knobsEnabled = false;
+   this.knobsRelativePre = null;
    this.knobSelectionPre = null;
    this.knobSelection = "Knob 1";
    this.knobSelectionNum = 0;
@@ -158,6 +160,24 @@ function Generic() {
       this.faderCCs[i] = 0;
    }
 
+   // Track select buttons:
+   this.trackButtonsEnabledPre = null;
+   this.trackButtonsEnabled = false;
+   this.trackButtonsSelectionPre = null;
+   this.trackButtonsSelection = "Track Select 1";
+   this.trackButtonsSelectionNum = 0;
+   this.trackButtonsCCsPre = [];
+   this.trackButtonsCCs = [];
+   this.learnTrackButtonsSinglePre = null;
+   this.learnTrackButton = false;
+   this.learnTrackButtonsAllPre = null;
+   this.learnAllTrackButtons = false;
+   for (var i = 0; i < 8; i++) {
+      this.trackButtonsCCsPre[i] = null;
+      this.trackButtonsCCs[i] = 0;
+   }
+
+
    return this;
 }
 
@@ -168,7 +188,9 @@ const LEARN = ["Learn", "Off"];
 const TRANSPORT = ["Rewind", "FastForward", "Stop", "Play/Pause", "Record", "Loop"];
 const KNOBS = ["Knob 1", "Knob 2", "Knob 3", "Knob 4", "Knob 5", "Knob 6", "Knob 7", "Knob 8"];
 const KNOBMODE = ["None", "One", "Two"];
+const KNOBSRELATIVE = ["Absolute", "Relative (2's complement)"];
 const FADERS = ["Fader 1", "Fader 2", "Fader 3", "Fader 4", "Fader 5", "Fader 6", "Fader 7", "Fader 8"];
+const TRACKSELECTION = ["Track Select 1", "Track Select 2", "Track Select 3", "Track Select 4", "Track Select 5", "Track Select 6", "Track Select 7", "Track Select 8"];
 const FADERBANK = ["None", "Two"];
 
 // Definition of the controller:
@@ -220,7 +242,7 @@ function init() {
       gen.midiMonEnable ? gen.midiMonChannelPre.show() : gen.midiMonChannelPre.hide();
       gen.midiMonEnable ? gen.midiMonTypePre.show() : gen.midiMonTypePre.hide();
       gen.midiMonEnable ? gen.midiMonDataPre.show() : gen.midiMonDataPre.hide();
-      if (!gen.midiMonEnable) {
+ if (!gen.midiMonEnable) {
          gen.midiMonChannelPre.set("");
          gen.midiMonTypePre.set("");
          gen.midiMonDataPre.set("");
@@ -290,6 +312,11 @@ function init() {
    // Midi Learn Knobs:
    gen.knobsEnabledPre = gen.prefs.getEnumSetting("Controller Has Knobs", "Knobs", YESNO, "No");
    gen.knobSelectionPre = gen.prefs.getEnumSetting("Select the Knob to learn: ", "Knobs", KNOBS, "Knob 1");
+   gen.knobsRelativePre = gen.prefs.getEnumSetting("Knobs are relative", "Knobs", KNOBSRELATIVE, "Absolute");
+   gen.knobsRelativePre.addValueObserver(function (value) {
+      gen.knobsRelative = !(value === "Absolute");
+   });
+
    for (var i = 0; i < 8; i++) {
       gen.knobCCsPre[i] = gen.prefs.getNumberSetting("Knob " + (i + 1) + " CC: ", "Knobs", 0, 127, 1, "", 0);
    }
@@ -387,6 +414,47 @@ function init() {
       setKnobMode();
    });
 
+   // Midi Learn Track Select Buttons:
+   gen.trackButtonsEnabledPre = gen.prefs.getEnumSetting("Track Selectors: ", "Track Selection", YESNO, "No");
+   gen.trackButtonsSelectionPre = gen.prefs.getEnumSetting("Learn track selector: ", "Track Selection", TRACKSELECTION, "Track Select 1");
+   for (var i = 0; i < 8; i++) {
+      gen.trackButtonsCCsPre[i] = gen.prefs.getNumberSetting("Track Select " + (i + 1) + " CC: ", "Track Selection", 0, 127, 1, "", 0);
+   }
+   gen.learnTrackButtonsSinglePre = gen.prefs.getEnumSetting("Learn current track selector: ", "Track Selection", LEARN, "Off");
+   gen.learnTrackButtonsAllPre = gen.prefs.getEnumSetting("Learn all track selectors: ", "Track Selection", LEARN, "Off");
+
+   gen.trackButtonsEnabledPre.addValueObserver(function (value) {
+      gen.trackButtonsEnabled = (value === "Yes");
+      setTrackButtonsPrefsVisible();
+   });
+
+   gen.trackButtonsSelectionPre.addValueObserver(function (value) {
+      gen.trackButtonsSelection = value;
+      for (var i = 0; i < 8; i++) {
+         if (TRACKSELECTION[i] === value) {
+            gen.trackButtonsSelectionNum = i;
+         }
+      }
+      setTrackButtonsPrefsVisible();
+   });
+
+   for (var i = 0; i < 8; i++) {
+      gen.trackButtonsCCsPre[i].addValueObserver(128, getValueObserverFunc(i, gen.trackButtonsCCs));
+      gen.trackButtonsCCsPre[i].hide();
+   }
+
+   gen.learnTrackButtonsSinglePre.addValueObserver(function (value) {
+      gen.learnTrackButton = (value === "Learn");
+   });
+
+   gen.learnTrackButtonsAllPre.addValueObserver(function (value) {
+      gen.learnAllTrackButtons = (value === "Learn");
+      if (gen.learnAllTrackButtons) {
+         gen.trackButtonsSelectionPre.set("Track Select 1");
+         host.showPopupNotification("Please press track select button 1");
+      }
+   });
+
    // Midi Learn Faders:
    gen.fadersEnabledPre = gen.prefs.getEnumSetting("Controller has Faders: ", "Faders", YESNO, "No");
    gen.faderSelectionPre = gen.prefs.getEnumSetting("Select the Fader to learn: ", "Faders", FADERS, "Fader 1");
@@ -427,6 +495,7 @@ function init() {
          host.showPopupNotification("Please move Fader 1");
       }
    });
+
 
    // Trackbank Buttons:
    gen.faderBankButtonsPre = gen.prefs.getEnumSetting("Fader Bank Navigation Buttons", "Fader Bank Buttons", FADERBANK, "None");
@@ -613,6 +682,39 @@ function onMidi(status, data1, data2) {
                   break;
             }
          }
+
+         // Midi Learn a single track select button:
+         if (gen.learnTrackButton) {
+            gen.learnTrackButtonsSinglePre.set("Off");
+            gen.trackButtonsCCsPre[gen.trackButtonsSelectionNum].set(data1, 128);
+         }
+         // Midi Learn all 8 track select buttons:
+         else if (gen.learnAllTrackButtons) {
+            switch (gen.trackButtonsSelectionNum) {
+               case 0:
+                  if (gen.trackButtonsCCs[7] != data1) {
+                     gen.trackButtonsCCsPre[gen.trackButtonsSelectionNum].set(data1, 128);
+                     gen.trackButtonsSelectionPre.set("Track Select 2");
+                     host.showPopupNotification("Please press track selection button 2.");
+                  }
+                  break;
+               case 7:
+                  if (gen.trackButtonsCCs[gen.trackButtonsSelectionNum - 1] != data1) {
+                     gen.learnTrackButtonsAllPre.set("Off");
+                     gen.trackButtonsCCsPre[gen.trackButtonsSelectionNum].set(data1, 128);
+                     gen.trackButtonsSelectionPre.set("Track Select 1");
+                     host.showPopupNotification("Midi Learn finished.");
+                  }
+                  break;
+               default:
+                  if (gen.trackButtonsCCs[gen.trackButtonsSelectionNum - 1] != data1) {
+                     gen.trackButtonsCCsPre[gen.trackButtonsSelectionNum].set(data1, 128);
+                     gen.trackButtonsSelectionPre.set("Track Select " + (gen.trackButtonsSelectionNum + 2));
+                     host.showPopupNotification("Please press track selection button " + (gen.trackButtonsSelectionNum + 2) + ".");
+                  }
+                  break;
+            }
+         }
          // Midi Learn the Button(s) to navigate the Fader Bank:
          else if (gen.learnFaderBankButtons) {
             if (gen.faderBankButton === 0) {
@@ -690,7 +792,6 @@ function onMidi(status, data1, data2) {
                   break;
                // Cycle Knob Mode:
                case gen.knobModeButton1CC:
-                  if (midi.isOn()) {
                      if (gen.knobMode < gen.knobLoopLength) {
                         gen.knobMode += 1;
                      }
@@ -698,10 +799,8 @@ function onMidi(status, data1, data2) {
                         gen.knobMode = 0;
                      }
                      setKnobMode();
-                  }
                   break;
                case gen.knobModeButton2CC:
-                  if (midi.isOn()) {
                      if (gen.knobMode > 0) {
                         gen.knobMode -= 1;
                      }
@@ -709,18 +808,13 @@ function onMidi(status, data1, data2) {
                         gen.knobMode = gen.knobLoopLength;
                      }
                      setKnobMode();
-                  }
                   break;
                // Track Bank Navigation:
                case gen.faderBankButton1CC:
-                  if(midi.isOn()) {
                      gen.trackBank.scrollChannelsPageUp();
-                  }
                   break;
                case gen.faderBankButton2CC:
-                  if(midi.isOn()) {
                      gen.trackBank.scrollChannelsPageDown();
-                  }
                   break;
 
                // Set Knobs:
@@ -774,6 +868,32 @@ function onMidi(status, data1, data2) {
                case gen.faderCCs[7]:
                   gen.trackBank.getChannel(7).getVolume().set(midi.data2, 128);
                   break;
+
+              // Set Faders:
+              case gen.trackButtonsCCs[0]:
+                 gen.trackBank.getChannel(0).select();
+                 break;
+              case gen.trackButtonsCCs[1]:
+                 gen.trackBank.getChannel(1).select();
+                 break;
+              case gen.trackButtonsCCs[2]:
+                 gen.trackBank.getChannel(2).select();
+                 break;
+              case gen.trackButtonsCCs[3]:
+                 gen.trackBank.getChannel(3).select();
+                 break;
+              case gen.trackButtonsCCs[4]:
+                 gen.trackBank.getChannel(4).select();
+                 break;
+              case gen.trackButtonsCCs[5]:
+                 gen.trackBank.getChannel(5).select();
+                 break;
+              case gen.trackButtonsCCs[6]:
+                 gen.trackBank.getChannel(6).select();
+                 break;
+              case gen.trackButtonsCCs[7]:
+                 gen.trackBank.getChannel(7).select();
+                 break;
             }
          }
          break;
@@ -896,19 +1016,36 @@ function setKnobMode() {
 
 // Helper Function to set the Knob Value depending on the current Mode:
 function setKnobValue(index, midi) {
+  var val;
+  var inc = function(i){
+    var v
+    if(i<64) {
+      v = i;
+    } else {
+      v = -(128 - i);
+    }
+    return v;
+  }
+
    switch (gen.knobMode) {
       case 0:
-         gen.cursorDevice.getMacro(index).getAmount().set(midi.data2, 128);
+         val = gen.cursorDevice.getMacro(index).getAmount();
          break;
       case 1:
-         gen.cursorDevice.getCommonParameter(index).set(midi.data2, 128);
+         val = gen.cursorDevice.getCommonParameter(index);
          break;
       case 2:
-         gen.cursorDevice.getEnvelopeParameter(index).set(midi.data2, 128);
+         val = gen.cursorDevice.getEnvelopeParameter(index);
          break;
       default:
-         gen.cursorDevice.getParameter(index).set(midi.data2, 128);
+         val = gen.cursorDevice.getParameter(index);
          break;
+   }
+
+   if (gen.knobsRelative) {
+     val.inc(inc(midi.data2), 128);
+   } else {
+     val.set(inc(midi.data2), 128);
    }
 }
 
@@ -947,6 +1084,7 @@ function setKnobPrefsVisible() {
          }
       }
       gen.knobsEnabled ? gen.knobSelectionPre.show() : gen.knobSelectionPre.hide();
+      gen.knobsEnabled ? gen.knobsRelativePre.show() : gen.knobsRelativePre.hide();
       gen.knobsEnabled ? gen.learnKnobsSinglePre.show() : gen.learnKnobsSinglePre.hide();
       gen.knobsEnabled ? gen.learnKnobsAllPre.show() : gen.learnKnobsAllPre.hide();
    }
@@ -970,6 +1108,27 @@ function setFadersPrefsVisible() {
       gen.fadersEnabled ? gen.faderSelectionPre.show() : gen.faderSelectionPre.hide();
       gen.fadersEnabled ? gen.learnFadersSinglePre.show() : gen.learnFadersSinglePre.hide();
       gen.fadersEnabled ? gen.learnFadersAllPre.show() : gen.learnFadersAllPre.hide();
+
+   }
+   catch (e) {
+   }
+}
+// Helper Function to switch on and off the additional Fader Controls:
+function setTrackButtonsPrefsVisible() {
+   try {
+      for (var i = 0; i < 8; i++) {
+         if (gen.trackButtonsEnabled) {
+            gen.trackButtonsSelectionNum === i ? gen.trackButtonsCCsPre[i].show() : gen.trackButtonsCCsPre[i].hide();
+            gen.trackBank.getChannel(i).getVolume().setIndication(true);
+         }
+         else {
+            gen.trackButtonsCCsPre[i].hide();
+            gen.trackBank.getChannel(i).getVolume().setIndication(false);
+         }
+      }
+      gen.trackButtonsEnabled ? gen.trackButtonsSelectionPre.show() : gen.trackButtonsSelectionPre.hide();
+      gen.trackButtonsEnabled ? gen.learnTrackButtonsSinglePre.show() : gen.learnTrackButtonsSinglePre.hide();
+      gen.trackButtonsEnabled ? gen.learnTrackButtonsAllPre.show() : gen.learnTrackButtonsAllPre.hide();
 
    }
    catch (e) {
