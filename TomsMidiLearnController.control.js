@@ -1027,7 +1027,7 @@ function setKnobValue(index, midi) {
    if (gen.knobsRelative) {
      val.inc(inc(midi.data2), 128);
    } else {
-     val.set(inc(midi.data2), 128);
+     val.set(midi.data2, 128);
    }
 }
 
