@@ -561,17 +561,26 @@ function init() {
 
    var setKnobMIDIValue = function(i) {
      return function(value) {
-      //  println(gen.knobCCs[i]);
+      // println(gen.knobCCs[i]);
       if(i == 0){println("knob mode:"+String(gen.knobMode))};
-      println(value)
+      // println(value)
        host.getMidiOutPort(0).sendMidi(0xB0,knobCCs[i],value);
      };
    };
+
+   var setFaderMIDIValue = function(i) {
+     return function(value) {
+       println('setting fader to '+value+' at '+i);
+       host.getMidiOutPort(0).sendMidi(0xB0,faderCCs[i],value);
+     };
+   };
+
    for (var i = 0; i< 8; i++) {
      gen.cursorDevice.getCommonParameter(i).addValueObserver(128,setKnobMIDIValue(i));
      gen.cursorDevice.getEnvelopeParameter(i).addValueObserver(128,setKnobMIDIValue(i));
      gen.cursorDevice.getParameter(i).addValueObserver(128,setKnobMIDIValue(i));
      gen.cursorDevice.getMacro(i).getAmount().addValueObserver(128,setKnobMIDIValue(i));
+     gen.trackBank.getChannel(i).getVolume().addValueObserver(128,setFaderMIDIValue(i));
    }
 
 }
